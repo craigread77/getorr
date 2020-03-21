@@ -2,37 +2,99 @@ package Getorr;
 use v5.18;
 use strict;
 use warnings;
+use utf8;
 use WWW::Mechanize;
 use WWW::Mechanize::TreeBuilder;
 
-sub convert_mb_leet {
+sub convert_mb {
     my $size = $_[0];
     $size // return undef;
     
-    if ($size =~ /MB/) {
+    if ($size =~ /MB/n) {
         $size =~ s/ MB//;
         return $size;
     }
-    else {
+    elsif ($size =~ / GB/n) {
         $size =~ s/ GB//;
         return int($size * 1024);
     }
     
+    elsif ($size =~ /GiB/n) {
+        $size =~ s/GiB//;
+        return int($size * 1024);
+    }
+    
+    else {
+        $size =~ s/MiB//;
+        return $size;
+    }
+    
+    
+    
+    
 }
 
-sub fetch_tpb_torrent {
+sub get_tpb_torrent {
     my $self = shift;
     my $name = shift;  
-    my $url_name = $name =~ s/\s+/\+/gr; # Replace spaces with '+'
-    my $url = "https://www.pirate-bay.net/search?q=$url_name?q=$url_name";
+    my $url_name = $name =~ s/\s+/\%20/gr; # Replace spaces with '+'
+    my $url = "https://thepiratebay.zone/search/$url_name/1/99/0";
+    say "Executing get_tpb_torrent...";
+    say "Search URL: $url\n\n";
+
+    # Array of hashes (keys are title, size, seeds, magnet)
+    my @torrents;
+
     my $mech = WWW::Mechanize->new();
     WWW::Mechanize::TreeBuilder->meta->apply($mech);
     
     $mech->get( $url );
-    return $mech->text();
+    
+    # Get all magnet links
+    my $count = 0;
+    for (@{ $mech->extract_links('a') }) {
+        my ($link) = @$_;
+        if ( $link =~ /^(?:magnet)/ ) {
+            $torrents[$count]{magnet} = $link;
+            $count++;
+        }
+    }
+    
+    $count = 0;
+    for my $title ( $mech->look_down( class => 'detLink' ) ) {
+        $torrents[$count]{title} = $title->as_text();
+        $count++;
+    }
+    
+    $count = 0;
+    for my $size ( $mech->look_down( class => 'detDesc' ) ) {
+        $size = $size->as_text() =~ s/[^a-zA-Z0-9 .]//gr;
+        if ($size =~ /Size (\d+\.\d+)(GiB|MiB)/) {
+            $size = convert_mb($1 . $2);
+            $torrents[$count]{size} = $size;
+            $count++;
+        }   
+    }
+    
+    # Seeds and leechers come through together, so we alternate through the array.
+    # Even indexes are Seed values
+    $count = 0;
+    my $subcount = 0;
+    for my $seed ( $mech->look_down("align", "right") ) {
+        $seed = $seed->as_text();
+        if ($subcount % 2 == 0) {
+            $torrents[$count]{seeds} = $seed;
+            $count++;
+        }    
+        
+        $subcount++;     
+    }
+    
+    return @torrents;
+ 
 }
 
-sub fetch_leet_torrent {
+sub get_leet_torrent {
     my $self = shift;
     my $name = shift;
     my $url_name = $name =~ s/\s+/%20/gr; # Replace spaces with '%20'
@@ -84,7 +146,7 @@ sub fetch_leet_torrent {
     for (@sizes) {
         my $size = $_->as_XML();
         if ($size =~ m{(\d+\.\d+ GB)|(\d+\.\d+ MB)|(\d,\d+\.\d+ MB)}s) {
-            $size = convert_mb_leet($1);
+            $size = convert_mb($1);
             $size =~ s/"//g if $size;
         }
         
@@ -97,7 +159,7 @@ sub fetch_leet_torrent {
     
 }
 
-sub fetch_rarbg_torrent {
+sub get_rarbg_torrent {
     my $self = shift;
     my $name = shift;
     my $url_name = $name =~ s/\s+/\+/gr; # Replace spaces with '+'
@@ -130,12 +192,12 @@ sub get_magnet_link_leet {
     return $magnet;
 }
 
-sub download_torrent_leet {
+sub download_torrent {
     my $self = shift;
     my $magnet = shift;
     
     my $script = 'qbt torrent add url "' . $magnet . '"';
-    `$script`;
+    `$script` // say "FAILED!";
 }
     
 
