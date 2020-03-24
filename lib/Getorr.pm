@@ -37,7 +37,7 @@ sub convert_mb {
 sub get_tpb_torrent {
     my $self = shift;
     my $name = shift;  
-    my $url_name = $name =~ s/\s+/\%20/gr; # Replace spaces with '+'
+    my $url_name = $name =~ s/\s+/\%20/gr; # Replace spaces with '%20'
     my $url = "https://thepiratebay.zone/search/$url_name/1/99/0";
     say "Executing get_tpb_torrent...";
     say "Search URL: $url\n\n";
