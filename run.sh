@@ -6,4 +6,4 @@ else
 fi;
 
 cd ~/getorr;
-perl get_torrent.pl $@;
+perl get_torrent_api.pl $@;
