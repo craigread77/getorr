@@ -40,7 +40,7 @@ sub get_torrents {
     
     # Get magnet from Jackett api link
     else {
-        my $dom = XML::LibXML->load_xml(location => $url) or say "skipped $url" && return undef;
+        my $dom = XML::LibXML->load_xml(location => $url) or warn "Skipped $url: $!";
         
         for my $item ($dom->findnodes('//item')) {
             my $title = $item->findvalue('./title');
