@@ -10,7 +10,7 @@ use Data::Dumper;
 
 # Set API_KEY
 my %config = (
-    'API_KEY'           => '***REMOVED***',
+    'API_KEY'           => 'placeholder',
     'HOSTNAME'          => 'http://127.0.0.1',
     'PORT'              => '9117',
     'MIN_TORRENT_SIZE'  =>  300,  # MB
