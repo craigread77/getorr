@@ -54,7 +54,7 @@ for my $i (0 .. $#indexers) {
     }
     
     # Example:
-    # http://127.0.0.1:9117/api/v2.0/indexers/1337x/results/torznab/api?apikey=***REMOVED***&t=search&cat=2000&q=ubuntu+server&limit=10
+    # http://127.0.0.1:9117/api/v2.0/indexers/1337x/results/torznab/api?apikey={REMOVED}&t=search&cat=2000&q=ubuntu+server&limit=10
     my $api_call = $indexers[$i]{'url'}.'api?apikey='.$config{'API_KEY'}.'&t=search&cat='.$config{'CAT'}.'&q='.$search.'&limit='.$config{'RESULTS'};  
     say $api_call;
     my $magnet = $indexers[$i]{'magnet'} // undef;
